@@ -4,7 +4,8 @@ import time
 import board
 import neopixel
 
-numberLed = 56
+numberLedByLine = 168
+numberLed = numberLedByLine*2
 pixels = neopixel.NeoPixel(board.D21, numberLed, brightness=1, auto_write=False)
 
 color = (0,0,255)
@@ -17,20 +18,6 @@ url = "https://potter.digital-wizards.ovh/api"
 
 
 sio = socketio.Client()
-
-
-def main():
-    sio.connect(url)
-    while True:
-        if fct == 0:
-            time.sleep(0.1)
-        else:
-            try:
-                fct()
-            except:
-                print("error")
-                fct = 0
-                pass
 
 def ChangeColor(Data):
     global color
@@ -86,11 +73,13 @@ def Load():
     global color
     global numberLed
     global pixels
+    pixels.fill((0,0,0))
+    pixels.show()
     for i in range(numberLed/2):
         pixels[i] = color
         pixels[(numberLed/2)+i] = color
         pixels.show()
-        time.sleep(0.1)
+        time.sleep(0.01)
 
 def Fill():
     global color
@@ -98,7 +87,22 @@ def Fill():
     global pixels
     pixels.fill(color)
     pixels.show()
+      
+def main():
+    global sio
+    global fct
+    fct = Fill
+    while True:
+        if not sio.connected:
+            sio.connect(url)
+            time.sleep(5)
         
+        while sio.connected:
+            try:
+                fct()
+            except:
+                print("error")
+  
 @sio.event
 def connect():
     sio.emit("rpi:server:init","");
